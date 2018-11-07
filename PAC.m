@@ -22,7 +22,7 @@ function varargout = PAC(varargin)
 
 % Edit the above text to modify the response to help PAC
 
-% Last Modified by GUIDE v2.5 18-Oct-2018 23:02:44
+% Last Modified by GUIDE v2.5 07-Nov-2018 18:07:18
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -145,3 +145,42 @@ function data = read_pac_file(filepath)
 function values = str_array_to_matrix(line)
     strs = strsplit(line,'=');
     values = str2num(strs{2});
+
+
+% --- Executes on button press in pushbutton2.
+function pushbutton2_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton2 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+    dir_path = uigetdir();
+    if dir_path == 0
+        return
+    end
+    disp(dir_path)
+    % get subfolders
+    d = dir(dir_path);
+    isub = [d(:).isdir]; %# returns logical vector
+    subfolders = {d(isub).name}';
+    subfolders(ismember(subfolders,{'.','..'})) = [];
+    % load files in each folder
+    OD = []; OS = []; 
+    n_person = 0;
+    for i=1:length(subfolders)
+        curr_path_OD = fullfile(dir_path, subfolders{i}, 'OD.mat');
+        curr_path_OS = fullfile(dir_path, subfolders{i}, 'OS.mat');
+        if exist(curr_path_OD, 'file') == 2 && exist(curr_path_OS, 'file') == 2
+            tmp_OD = load(curr_path_OD,'OD');
+            OD = [OD; tmp_OD.OD];
+            tmp_OS = load(curr_path_OS,'OS');
+            OS = [OS; tmp_OS.OS];
+            n_person = n_person + 1;
+        else
+            disp(['(skip) not enough file: ', fullfile(dir_path, subfolders{i})])
+        end
+    end
+    %
+    disp(['combined ', num2str(n_person), ' subjects'])
+    save(fullfile(dir_path,'full_OD.mat'),'OD')
+    plot_image(OD, handles.axes7)
+    save(fullfile(dir_path,'full_OS.mat'),'OS')
+    plot_image(OS, handles.axes8)
